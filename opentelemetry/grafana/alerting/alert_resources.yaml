@@ -1,0 +1,13 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: grafana-default-email
+      receivers:
+        - uid: edmgtml4xbhtsd
+          type: email
+          settings:
+            addresses: abc@smaple.co.kr
+            message: hello
+            singleEmail: false
+            subject: grafana alert
+          disableResolveMessage: false

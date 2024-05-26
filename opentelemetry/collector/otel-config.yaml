@@ -1,0 +1,69 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+receivers:
+  # Data sources: traces, metrics, logs
+  otlp:
+    protocols:
+      grpc:
+        endpoint: ${env:OTEL_COLLECTOR_GRPC_ADDR}
+        # tls: # tls 미사용시 tls부터 주석
+        #   cert_file: /etc/otelcol-contrib/server.crt
+        #   key_file: /etc/otelcol-contrib/server.key
+      http:
+        endpoint: ${env:OTEL_COLLECTOR_HTTP_ADDR}
+        # react 같은 client service에서 적용할때 사용
+        # cors:
+        #   allowed_origins:
+        #     - http://localhost:8080
+
+exporters:
+  debug:
+  otlp:
+    endpoint: "http://tempo:4317"
+    # endpoint: "http://jaeger:4317"
+    tls:
+      insecure: true
+  otlp/jaeger: # Jaeger supports OTLP directly. The default port for OTLP/gRPC is 4317
+    endpoint: http://jaeger:${env:JAEGER_EXPORTER_PORT}
+    tls:
+      insecure: true
+  otlphttp/prometheus:
+    endpoint: "http://${env:PROMETHEUS_ADDR}/api/v1/otlp"
+    tls:
+      insecure: true
+
+processors:
+  batch:
+
+extensions:
+  health_check:
+
+connectors:
+  spanmetrics:
+    dimensions:
+    - name: http.status_code
+    - name: http.target
+    - name: http.url # gateway, designer-client 전용
+    - name: http.method
+    - name: http.scheme
+    - name: http.route
+    - name: rpc.grpc.status_code
+    - name: rpc.method
+    - name: rpc.service
+    - name: db.system
+    - name: db.statement
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/jaeger, debug, spanmetrics, otlp]
+    metrics:
+      receivers: [otlp, spanmetrics]
+      processors: [batch]
+      exporters: [otlphttp/prometheus, debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]

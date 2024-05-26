@@ -1,0 +1,4 @@
+.env
+
+opentelemetry/secretkey
+opentelemetry/grafana/provisioning/alerting
