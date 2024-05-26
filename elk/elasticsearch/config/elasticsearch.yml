@@ -1,0 +1,7 @@
+cluster.name: es-docker-cluster
+network.host: 0.0.0.0
+
+xpack.license.self_generated.type: basic
+xpack.security.enabled: true
+xpack.security.transport.ssl.enabled: true
+# xpack.watcher.enabled: true # basic에서 지원 x

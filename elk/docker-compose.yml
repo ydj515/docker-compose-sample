@@ -1,0 +1,188 @@
+version: '3.7'
+
+services:
+  es01:
+    build:
+      context: elasticsearch/
+      args:
+        ELASTICSEARCH_VERSION: ${ELASTICSEARCH_VERSION}
+        ELASTICSEARCH_IMAGE: ${ELASTICSEARCH_IMAGE}
+    container_name: es01
+    environment:
+      node.name: es01
+      discovery.seed_hosts : es02,es03
+      cluster.initial_master_nodes : es01,es02,es03
+      bootstrap.memory_lock : true
+      ES_JAVA_OPTS : -Xms512m -Xmx512m
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - data01:/usr/share/elasticsearch/data:Z
+    ports:
+      - 9200:9200
+      - 9300:9300
+    networks:
+      - elastic
+
+  es02:
+    build:
+      context: elasticsearch/
+      args:
+        ELASTICSEARCH_VERSION: ${ELASTICSEARCH_VERSION}
+        ELASTICSEARCH_IMAGE: ${ELASTICSEARCH_IMAGE}
+    container_name: es02
+    environment:
+      node.name: es02
+      discovery.seed_hosts: es01,es03
+      cluster.initial_master_nodes: es01,es02,es03
+      bootstrap.memory_lock: true
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - data02:/usr/share/elasticsearch/data:Z
+    ports:
+      - 9301:9300
+    networks:
+      - elastic
+
+  es03:
+    build:
+      context: elasticsearch/
+      args:
+        ELASTICSEARCH_VERSION: ${ELASTICSEARCH_VERSION}
+        ELASTICSEARCH_IMAGE: ${ELASTICSEARCH_IMAGE}
+    container_name: es03
+    environment:
+      node.name: es03
+      discovery.seed_hosts: es01,es02
+      cluster.initial_master_nodes: es01,es02,es03
+      bootstrap.memory_lock: true
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - data03:/usr/share/elasticsearch/data:Z
+    ports:
+      - 9302:9300
+    networks:
+      - elastic
+
+  kibana:
+    container_name: kibana
+    image: ${KIBANA_IMAGE}:${ELASTICSEARCH_VERSION}
+    environment:
+      SERVER_NAME: kibana
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+    ports:
+      - 5601:5601
+    volumes:
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+    depends_on:
+      - es01
+      - es02
+      - es03
+    networks:
+      - elastic
+
+  logstash:
+    container_name: logstash
+    image: ${LOGSTASH_IMAGE}:${ELASTICSEARCH_VERSION}
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
+    ports:
+      - 5044:5044
+      - 50000:50000/tcp
+      - 50000:50000/udp
+      - 9600:9600
+    environment:
+      LS_JAVA_OPTS: -Xms256m -Xmx256m
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+    depends_on:
+      - es01
+      - es02
+      - es03
+    networks:
+      - elastic
+
+  metricbeat:
+    container_name: metricbeat
+    image: ${METRICBEAT_IMAGE}:${ELASTICSEARCH_VERSION}
+    user: root
+    command:
+      # Log to stderr.
+      - -e
+      # Disable config file permissions checks. Allows mounting
+      # 'config/metricbeat.yml' even if it's not owned by root.
+      # see: https://www.elastic.co/guide/en/beats/libbeat/current/config-file-permissions.html
+      - --strict.perms=false
+      # Mount point of the host’s filesystem. Required to monitor the host
+      # from within a container.
+      - --system.hostfs=/hostfs
+    volumes:
+      - ./metricbeat/config/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro,Z
+      - type: bind
+        source: /
+        target: /hostfs
+        read_only: true
+      - type: bind
+        source: /sys/fs/cgroup
+        target: /hostfs/sys/fs/cgroup
+        read_only: true
+      - type: bind
+        source: /proc
+        target: /hostfs/proc
+        read_only: true
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        read_only: true
+    environment:
+      METRICBEAT_INTERNAL_PASSWORD: ${METRICBEAT_INTERNAL_PASSWORD:-}
+      MONITORING_INTERNAL_PASSWORD: ${MONITORING_INTERNAL_PASSWORD:-}
+      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
+    depends_on:
+      - es01
+      - es02
+      - es03
+    networks:
+      - elastic
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - 3000:3000
+    networks:
+      - elastic
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  data01:
+    driver: local
+  data02:
+    driver: local
+  data03:
+    driver: local
+  kibana:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  elastic:
+    driver: bridge
