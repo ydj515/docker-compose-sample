@@ -7,7 +7,7 @@ networks:
 
 services:
   otel-collector:
-    image: otel/opentelemetry-collector-contrib
+    image: otel/opentelemetry-collector-contrib:0.119.0
     volumes:
       - ./collector/otel-config.yaml:/etc/otelcol-contrib/config.yaml
       # - ./secretkey/server.key:/etc/otelcol-contrib/server.key
@@ -29,7 +29,7 @@ services:
       - jaeger
 
   jaeger:
-    image: jaegertracing/all-in-one
+    image: jaegertracing/all-in-one:1.42
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
       COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
@@ -39,7 +39,7 @@ services:
       - "4317" # grpc
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v2.37.0
     ports:
       - "9090:9090"
     command:
@@ -54,7 +54,7 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
 
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:main-a9424ae
     command: ["-config.file=/etc/tempo.yaml"]
     ports:
       - "3200:3200"
@@ -63,8 +63,29 @@ services:
     volumes:
       - ./tempo/tempo.yaml:/etc/tempo.yaml
 
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: promtail
+    volumes:
+      - /var/log:/var/log # 실제 로그 파일 경로와 promptail.yaml의 __path__ 경로 기입
+      # - /opt/homebrew/Cellar/wildfly-as/35.0.1/libexec/standalone/log:/var/log/wildfly
+      - ./promtail/promtail.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:11.5.2
+    container_name: grafana
     ports:
       - "3000:3000"
     environment:
@@ -74,10 +95,11 @@ services:
       - ./grafana/provisioning/:/etc/grafana/provisioning/
     depends_on:
       - otel-collector
+      - loki
 
   node-cexporter:
-    image: quay.io/prometheus/node-exporter:latest
-    container_name: node_exporter
+    image: quay.io/prometheus/node-exporter
+    container_name: node-exporter
     ports:
       - "9100:9100"
     # command:

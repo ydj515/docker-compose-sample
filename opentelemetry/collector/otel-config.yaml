@@ -41,17 +41,17 @@ extensions:
 connectors:
   spanmetrics:
     dimensions:
-    - name: http.status_code
-    - name: http.target
-    - name: http.url # gateway, designer-client 전용
-    - name: http.method
-    - name: http.scheme
-    - name: http.route
-    - name: rpc.grpc.status_code
-    - name: rpc.method
-    - name: rpc.service
-    - name: db.system
-    - name: db.statement
+      - name: http.status_code
+      - name: http.target
+      - name: http.url
+      - name: http.method
+      - name: http.scheme
+      - name: http.route
+      - name: rpc.grpc.status_code
+      - name: rpc.method
+      - name: rpc.service
+      - name: db.system
+      - name: db.statement
 
 service:
   pipelines:

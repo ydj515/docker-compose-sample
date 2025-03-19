@@ -1,0 +1,56 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/*log
+
+  # - job_name: wildfly
+  #   static_configs:
+  #     - targets:
+  #         - localhost
+  #       labels:
+  #         job: wildflylogs
+  #         __path__: /var/log/wildfly/*.log
+
+  # - job_name: server
+  #   pipeline_stages:
+  #     - multiline:
+  #         firstline: "^Error:"
+  #     - match:
+  #         selector: '{job="server"}'
+  #         stages:
+  #           - regex:
+  #               expression: "^.*(?P<level>(error|Error|ERROR)).*$"
+  #           - labels:
+  #               level: "error"
+  #   static_configs:
+  #     - targets:
+  #         - localhost
+  #       labels:
+  #         job: server
+  #         __path__: /var/log/server/*.log
+
+  # - job_name: service-gz
+  #   decompression:
+  #     enabled: true
+  #     initial_delay: 10s
+  #     format: gz
+  #   static_configs:
+  #   - targets:
+  #       - localhost
+  #     labels:
+  #       job: service-gz
+  #       __path__: /var/log/service/**.gz
