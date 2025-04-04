@@ -35,6 +35,7 @@ plugins:
   - dynamic_throttling
   - limit-req
   - response-rewrite
+  - serverless-pre-function
   - ext-plugin-pre-req
   - ext-plugin-post-req
 

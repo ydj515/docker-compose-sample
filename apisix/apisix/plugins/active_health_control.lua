@@ -12,7 +12,7 @@ local schema = {
         health_check_path = {type = "string", default = "/api/health"},
         expected_status = {type = "integer", default = 200},
         rewrite_code = {type = "integer", default = 503},
-        rewrite_body = {type = "string", default = '{"message": "기관 API 점검 중입니다. 잠시 후 다시 시도해주세요."}'}
+        rewrite_body = {type = "string", default = '{"message": "API 점검 중입니다. 잠시 후 다시 시도해주세요."}'}
     },
     required = {"admin_api_url", "admin_api_token"}
 }
@@ -79,11 +79,16 @@ function _M.set_response_rewrite(route_conf, route_id)
     local httpc = http.new()
     local patch_body = {
         plugins = {
-            ["response-rewrite"] = {
-                status_code = route_conf.rewrite_code or 503,
-                body = route_conf.rewrite_body or '{"message": "기관 API 점검 중입니다."}',
-                headers = {
-                    ["Content-Type"] = "application/json"
+            ["serverless-pre-function"] = {
+                phase = "rewrite",
+                functions = {
+                    [[
+                        return function(conf, ctx)
+                            ngx.status = ]] .. (route_conf.rewrite_code or 503) .. [[
+                            ngx.say("]] .. (route_conf.rewrite_body or "API 점검 중입니다. 잠시 후 다시 시도해주세요.") .. [[")
+                            return ngx.exit(ngx.HTTP_OK)
+                        end
+                    ]]
                 }
             }
         }
@@ -126,7 +131,7 @@ function _M.remove_response_rewrite(route_conf, route_id)
 
     local route_cfg = route_data.value
     if route_cfg.plugins then
-        route_cfg.plugins["response-rewrite"] = nil
+        route_cfg.plugins["serverless-pre-function"] = nil
     end
     route_cfg.create_time = nil
     route_cfg.update_time = nil
