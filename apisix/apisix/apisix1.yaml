@@ -1,0 +1,64 @@
+apisix:
+  node_listen: 9080
+  enable_admin: true
+  enable_ipv6: false
+  enable_control: true
+  control:
+    ip: "0.0.0.0"
+    port: 9092
+
+  extra_lua_path: "/opt/?.lua"
+  logger:
+    level: "debug"
+
+deployment:
+  admin:
+    allow_admin:
+      - 0.0.0.0/0
+
+    admin_key:
+      - name: "admin"
+        key: edd1c9f034335f136f87ad84b625c8f1
+        role: admin
+
+      - name: "viewer"
+        key: 4054f7cf07e344346cd3f287985e76a2
+        role: viewer
+  etcd:
+    host:
+      - "http://etcd:2379"
+    timeout: 30
+
+plugins:
+  - active_health_control
+  - prometheus
+  - limit-req
+  - response-rewrite
+  - ext-plugin-pre-req
+  - ext-plugin-post-req
+
+ext-plugin:
+  cmd: ['java', '-jar', '-Xmx1g', '-Xms1g', '/usr/local/apisix/libs/apisix-demo-jar-with-dependencies.jar']
+
+plugin_attr:
+  active_health_control:
+    admin_api_url: "http://apisix1:9180"
+    admin_api_token: "edd1c9f034335f136f87ad84b625c8f1"
+    interval: 10
+    health_check_path: "/api/health"
+    expected_status: 200
+    rewrite_code: 503
+    rewrite_body: "{\"message\": \"점검 중입니다.\"}"
+  prometheus:
+    export_addr:
+      ip: "0.0.0.0"
+      port: 9091
+    enable_export_server: true
+  limit-req:
+
+nginx_config:
+  http:
+    enable_access_log: true
+    lua_shared_dict:
+      upstream-healthcheck: 10m
+  error_log_level: "debug"
