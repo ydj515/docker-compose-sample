@@ -1,13 +1,19 @@
+### common ###
 .env
 
+### opentelemetry ###
 opentelemetry/secretkey
 opentelemetry/grafana/provisioning/alerting
 
+### apisix ###
 HELP.md
 apisix/apisix-java-plugin-sample/target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+### redis-sentinel ###
+redis-sentinel/master-data
 
 ### STS ###
 .apt_generated
