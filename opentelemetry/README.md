@@ -6,6 +6,52 @@ Opentelemetry collector를 별도 구성하고 그에 기반한 trace, metric �
 
 각 폴더별 서비스의 .env-sample 참고하여 개인 설정에 맞는 .env 정의
 
+## 구성
+
+- `otel-collector` : OpenTelemetry 데이터를 수집(수신), 처리(Processor), 내보내기(Exporter) 역할을 수행하는 핵심 컴포넌트입니다. 다양한 포맷(OTLP, Prometheus 등)을 지원하여 trace, metric, log 데이터를 집계하고 다른 시스템으로 전달합니다.
+- `jaeger` : 트레이싱 데이터를 수집하고, 시각화하는 오픈소스 APM 툴입니다.
+- `tempo` : trace 스토리지 백엔드입니다.
+- `prometheus` : 시계열 기반의 모니터링 툴입니다. 메트릭 데이터를 수집하고 저장합니다.
+- `node-exporter` : Prometheus에서 사용하는 대표적인 exporter로, 시스템의 CPU, Memory, Disk 등 자원 상태를 수집합니다.
+- `loki` : 로그 집계 저장 시스템입니다. 
+- `promtail` : 호스트 또는 컨테이너의 로그 파일을 tail하여 loki로 전송하는 로그 수집기입니다.
+- `grafana` : 메트릭, 로그, 트레이스 등 다양한 관측 데이터를 하나의 UI로 통합하여 시각화하는 플랫폼입니다.
+
+```mermaid
+graph TD
+  subgraph "Tracing & Logging Stack"
+    otel["otel-collector"]
+    jaeger["jaeger"]
+    tempo["tempo"]
+    loki["loki"]
+    promtail["promtail"]
+  end
+
+  subgraph "Observability"
+    prometheus["prometheus"]
+    grafana["grafana"]
+    nodeexporter["node-exporter"]
+  end
+
+  %% Connections
+  otel -->|OTLP gRPC 4317 / HTTP 4318| jaeger
+  otel -->|Metrics| prometheus
+  promtail -->|Push Logs| loki
+  grafana -->|Query Logs & Metrics| loki
+  grafana -->|Query Metrics| prometheus
+  grafana -->|Query Traces| tempo
+  nodeexporter -->|Exposes Metrics on 9100| prometheus
+  prometheus -->|Scrape Metrics| nodeexporter
+  otel -->|Expose own metrics 8888| prometheus
+  grafana --> otel
+
+  %% External access
+  jaeger -->|Web UI :16686| User
+  prometheus -->|Web UI :9090| User
+  grafana -->|Web UI :3000| User
+```
+
+
 ### start with docker compose
 1. start docker compose
 
