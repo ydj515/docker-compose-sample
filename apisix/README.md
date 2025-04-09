@@ -138,23 +138,41 @@ curl -i -X PUT http://127.0.0.1:9180/apisix/admin/routes/1 \
 
 ## command
 ### etcd 명령어 잘 되어있는지 확인
+
+```bash
 etcdctl get --prefix "/apisix/"
+```
 
 ### etcd 설정 확인
+
+```bash
 etcdctl get / --prefix --keys-only --write-out=json
+```
 
 ### etcd 현재 revision값 확인
+
+```bash
 etcdctl --endpoints=http://localhost:2379 endpoint status --write-out=table
+```
 
 ### defrag 하기
+
+```bash
 etcdctl defrag --endpoints=http://localhost:2379
+```
 
 ### 디스크 용량 확인
+
+```bash
 du -sh /bitnami/etcd/data/member
+```
 
 ### route 설정 확인
+
+```bash
 curl -i -X GET http://127.0.0.1:9180/apisix/admin/routes \
 -H "X-API-KEY: edd1c9f034335f136f87ad84b625c8f1"
+```
 
 ### redis 값 확인
 
