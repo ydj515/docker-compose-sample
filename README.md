@@ -7,3 +7,4 @@
 - kafka : kRaft cluster, zookeeper cluster, single kafka
 - opentelemetry : opentelemetryCollector, jaeger, loki, prometheus, tempo, promtail, grafana
 - redis-sentinel : redis-sentinel cluster
+- redis-cluster : redis cluster
