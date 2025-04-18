@@ -73,10 +73,22 @@ docker compose up -d
 
 ```sh
 port 26379
-sentinel resolve-hostnames yes
+sentinel resolve-hostnames yes # yes로 설정하면 Sentinel이 IP 대신 호스트 이름(DNS)을 사용해서 마스터/슬레이브를 찾음.
+
+# mymaster : 감시할 마스터의 이름 (별명).
+# redis-master : 마스터 Redis 인스턴스의 호스트명.
+# 6379 : 마스터 Redis의 포트.
+# 2 : 몇 개의 Sentinel이 “이 노드는 죽었다” 라고 동의해야 failover가 발생하는지 설정.
+# (보통 Sentinel을 3개 띄우면 2 이상 설정)
 sentinel monitor mymaster redis-master 6379 2
+
+# Failover 판정 시간
 sentinel down-after-milliseconds mymaster 5000
+
+# Failover 후 슬레이브 동기화 동시 병렬 수. 새로운 마스터가 승격된 후, 슬레이브들은 데이터를 새 마스터로 맞춰야 함. 그때 몇 개의 슬레이브가 동시에 복제 받을지를 설정 → 1개씩 순차 동기화. 그때 몇 개의 슬레이브가 동시에 복제 받을지를 설정 → 1개씩 순차 동기화.
 sentinel parallel-syncs mymaster 1
+
+# Failover 총 제한 시간. Failover가 시작된 뒤 10초(10000ms) 안에 마스터 선출과 슬레이브 재정렬이 끝나지 않으면, 다시 처음부터 선출을 시도.
 sentinel failover-timeout mymaster 10000
 bind 0.0.0.0
 ```
