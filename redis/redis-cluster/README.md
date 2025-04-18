@@ -41,6 +41,20 @@ cluster 구성이 어떻게 되었나는 아래의 명령어로 확인 가능합
 - result
     ![alt text](./docs/cluster-check.png)
 
+- 참고: replica 수동 지정
+    replica 매칭을 직접 제어하고 싶다면, `--cluster-replicas 0`으로 만든 후 수동 replica 지정도 가능합니다.
+    
+    ```sh
+    redis-cli --cluster add-node --cluster-slave \
+    redis-node-4:7004 redis-node-1:7001
+
+    redis-cli --cluster add-node --cluster-slave \
+    redis-node-5:7005 redis-node-2:7002
+
+    redis-cli --cluster add-node --cluster-slave \
+    redis-node-6:7006 redis-node-3:7003
+    ```
+
 ## environment
 
 nothing to do.
