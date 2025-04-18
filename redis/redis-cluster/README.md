@@ -5,6 +5,42 @@
 - Redis Master 3개
 - Redis Replica 3개
 
+`--cluster-replicas 1` 옵션을 사용하면 Redis가 master/replica 구성을 자동으로 판단해서 할당해 줍니다.
+
+즉, 슬레이브(=replica)가 어떤 master를 따라갈지도 자동 판단하는데 다음의 기준을 가지고 판단해서 할당합니다.
+
+- 가능한 한 서로 다른 머신/호스트에 배치하려고 시도 (하지만 도커 환경에서는 모두 같은 물리 호스트라 큰 의미는 없음)
+- 각 master는 최대한 균등하게 슬롯을 분배 받음
+- 각 replica는 가능한 한 자기 자신이 master가 되지 않도록 배치됨
+
+## cluster setting
+`docker compose up -d` 명령어 수행 후 클러스터 구성하는 명령어를 실행하여 redis cluster를 구성합니다.
+
+- cluster setting command
+    ```sh
+    docker exec -it redis-node-1 redis-cli --cluster create \
+    $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-1):7001 \
+    $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-2):7002 \
+    $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-3):7003 \
+    $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-4):7004 \
+    $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-5):7005 \
+    $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-6):7006 \
+    --cluster-replicas 1
+    ```
+
+- cluster setting result
+    ![alt text](./docs/cluster-setting.png)
+
+cluster 구성이 어떻게 되었나는 아래의 명령어로 확인 가능합니다. (**`healthcheck.sh`**를 적절히 변겨어하여 이용해도 좋습니다.)
+
+- cluster setting check command
+    ```sh
+    docker exec -it redis-node-1 redis-cli --cluster check redis-node-1:7001
+    ```
+
+- result
+    ![alt text](./docs/cluster-check.png)
+
 ## environment
 
 nothing to do.
@@ -56,7 +92,9 @@ graph TD
 docker compose up -d
 ```
 
-### redis-node-n.conf
+### redis-node-{n}.conf
+
+각 redis 설정파일(redis-node-{n}.conf) 항목에 대한 설명입니다.
 
 ```sh
 port 7001
@@ -79,21 +117,3 @@ bind 0.0.0.0
 # 보호모드가 꺼져있으면 Redis는 비밀번호 없이도 누구나 접속 가능.
 protected-mode no
 ```
-
-### command
-
-`docker compose up -d` 명령어를 실행후 아래의 명령어를 실행하여 redis cluster를 구성한다.
-
-```sh
-docker exec -it redis-node-1 redis-cli --cluster create \
-$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-1):7001 \
-$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-2):7002 \
-$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-3):7003 \
-$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-4):7004 \
-$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-5):7005 \
-$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' redis-node-6):7006 \
---cluster-replicas 1
-```
-
-
-![alt text](./image.png)
