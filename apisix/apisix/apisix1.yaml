@@ -27,6 +27,8 @@ deployment:
   etcd:
     host:
       - "http://etcd:2379"
+      # - "http://etcd2:2379"
+      # - "http://etcd3:2379"
     timeout: 30
 
 plugins:

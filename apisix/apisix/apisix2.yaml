@@ -27,6 +27,8 @@ deployment:
   etcd:
     host:
       - "http://etcd:2379"
+      # - "http://etcd2:2379"
+      # - "http://etcd3:2379"
     timeout: 30
 
 plugins:
@@ -47,7 +49,7 @@ plugin_attr:
     health_check_path: "/api/health"
     expected_status: 200
     rewrite_code: 503
-    rewrite_body: "{\"message\": \"점검 중입니다.\"}"
+    rewrite_body: '{"message": "점검 중입니다."}'
   prometheus:
     export_addr:
       ip: "0.0.0.0"
@@ -56,7 +58,14 @@ plugin_attr:
   limit-req:
 
 ext-plugin:
-  cmd: ['java', '-jar', '-Xmx1g', '-Xms1g', '/usr/local/apisix/libs/apisix-demo-jar-with-dependencies.jar']
+  cmd:
+    [
+      "java",
+      "-jar",
+      "-Xmx1g",
+      "-Xms1g",
+      "/usr/local/apisix/libs/apisix-demo-jar-with-dependencies.jar"
+    ]
 
 nginx_config:
   http:

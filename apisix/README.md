@@ -135,7 +135,6 @@ curl -i -X PUT http://127.0.0.1:9180/apisix/admin/routes/1 \
 }'
 ```
 
-
 ## command
 ### etcd 명령어 잘 되어있는지 확인
 
@@ -180,3 +179,63 @@ curl -i -X GET http://127.0.0.1:9180/apisix/admin/routes \
 
 "limit_req:3route32last" => 1742868395840 : 마지막 요청이 처리된 타임스탬프
 1) "limit_req:3route32excess" => integer : 버스트(burst) 제한을 초과한 요청 개수를 나타냄. 현재 bucket에 누적된 초과 요청 수. excess 값은 10이 됨 -> "10개의 요청이 rate+burst를 넘어서 차단됐다"는 뜻
+
+### redis cluster 적용
+
+route 설정 시 redis cluster를 사용하게 된다면 아래처럼 route를 구성해야합니다.
+
+- as-is
+
+  ```json
+  "limit-req":{
+    "rate": 200,
+    "burst": 20,
+    "key": "route_id",
+    "policy": "redis",
+    "redis_host": "redis",
+    "redis_port": 6379,
+    "redis_timeout": 1000,
+    "rejected_code": 429
+  }
+  ```
+
+- to-be
+
+  ```json
+  "limit-req": {
+    "rate": 200,
+    "burst": 20,
+    "key": "route_id",
+    "policy": "redis-cluster",
+    "redis_cluster_nodes": [
+      "redis-node-1:7001",
+      "redis-node-2:7002",
+      "redis-node-3:7003",
+      "redis-node-4:7004",
+      "redis-node-5:7005",
+      "redis-node-6:7006"
+    ],
+    "redis_cluster": true,
+    "redis_timeout": 1000,
+    "rejected_code": 429
+  }
+  ```
+
+### etcd cluster 적용
+
+`apisix.yaml`에 아래 설정을 적용해야함.
+
+```yml
+deployment:
+  etcd:
+    host:
+      - "http://etcd1:2379"
+      - "http://etcd2:2379"
+      - "http://etcd3:2379"
+```
+
+### etcd cluster 확인
+docker exec -it etcd1 etcdctl member list
+
+### etcd cluster 리더 노드 확인
+docker exec -it etcd1 etcdctl endpoint status --write-out=table
