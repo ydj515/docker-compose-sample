@@ -39,7 +39,7 @@ services:
       - "4317" # grpc
 
   prometheus:
-    image: prom/prometheus:v2.37.0
+    image: prom/prometheus:v2.25.0
     ports:
       - "9090:9090"
     command:
@@ -65,7 +65,6 @@ services:
 
   loki:
     image: grafana/loki:3.0.0
-    container_name: loki
     ports:
       - "3100:3100"
     volumes:
@@ -74,7 +73,6 @@ services:
 
   promtail:
     image: grafana/promtail:3.0.0
-    container_name: promtail
     volumes:
       - /var/log:/var/log # 실제 로그 파일 경로와 promptail.yaml의 __path__ 경로 기입
       # - /opt/homebrew/Cellar/wildfly-as/35.0.1/libexec/standalone/log:/var/log/wildfly
@@ -85,7 +83,6 @@ services:
 
   grafana:
     image: grafana/grafana:11.5.2
-    container_name: grafana
     ports:
       - "3000:3000"
     environment:
@@ -98,8 +95,7 @@ services:
       - loki
 
   node-cexporter:
-    image: quay.io/prometheus/node-exporter
-    container_name: node-exporter
+    image: prom/node-exporter:v1.9.1
     ports:
       - "9100:9100"
     # command:

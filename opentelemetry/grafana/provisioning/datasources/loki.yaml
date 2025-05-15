@@ -11,3 +11,9 @@ datasources:
     jsonData:
       timeout: 60
       maxLines: 1000
+      derivedFields:
+        - name: TraceID
+          matcherRegex: '"traceid":"([a-f0-9]+)"'
+          url: '$${__value.raw}'
+          datasourceUid: tempo
+          internalLink: true

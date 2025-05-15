@@ -31,6 +31,8 @@ exporters:
     endpoint: "http://${env:PROMETHEUS_ADDR}/api/v1/otlp"
     tls:
       insecure: true
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
 
 processors:
   batch:
@@ -66,4 +68,4 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug]
+      exporters: [debug, loki]
