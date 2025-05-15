@@ -46,6 +46,7 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-remote-write-receiver
       - --enable-feature=otlp-write-receiver
+      # - --web.enable-otlp-receiver
       - --enable-feature=exemplar-storage
     environment:
       - OTEL_COLLECTOR_HOST=${OTEL_COLLECTOR_HOST}
